@@ -1,9 +1,12 @@
 #include <iostream>
 #include <string>
 #include <fstream>
-#include "item.cpp"
+#include "Item.cpp"
+#include "List.cpp"
 using namespace std;
 
+#ifndef ACCOUNT
+#define ACCOUNT
 class Account
 {
 private:
@@ -11,18 +14,34 @@ private:
 	string name;
 	string address;
 	string phoneNumber;
-	Item item[100];
+	List<Item*>* items;
 public:
+	//Destructror
+	Account() {
+		items = new List<Item*>();
+	}
+	Account(const string& id, const string& name, const string& address, const string& phoneNumber) {
+		this->id = id;
+		this->name = name;
+		this->address = address;
+		this->phoneNumber = phoneNumber;
+	}
+	~Account() {
+		cout << "Destroy account " << name << endl;
+		delete items;
+	}
 	// Getters
-	string getId() { return id; }
-	string getName() { return name; }
-	string getAddress() { return address; }
-	string getPhoneNumber() { return phoneNumber; }
+	string getId()const { return id; }
+	string getName()const { return name; }
+	string getAddress()const { return address; }
+	string getPhoneNumber()const { return phoneNumber; }
+	List<Item*>* getItems() { return items; }
 	// Setters
-	void setId(string id) { this->id = id; }
-	void setName(string name) { this->name = name; }
-	void setAddress(string address) { this->address = address; }
-	void setPhoneNumber(string phoneNumber) { this->phoneNumber = phoneNumber; }
+	void setId(const string& id) { this->id = id; }
+	void setName(const string& name) { this->name = name; }
+	void setAddress(const string& address) { this->address = address; }
+	void setPhoneNumber(const string& phoneNumber) { this->phoneNumber = phoneNumber; }
+	// Methods
 };
 class GuestAccount : public Account
 {
@@ -35,3 +54,5 @@ class VIPAccount : public Account
 {
 
 };
+
+#endif
