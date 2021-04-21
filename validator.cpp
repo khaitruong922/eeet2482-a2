@@ -8,26 +8,26 @@ bool isInteger(const string& s)
 {
 	int i;
 	char c;
-	int matches = sscanf(s.c_str(), "%d%c", &i, &c);
+	int matches = sscanf_s(s.c_str(), "%d%c", &i, &c);
 	return matches == 1;
 }
 bool isNonNegativeInteger(const string& s)
 {
 	int i;
 	char c;
-	int matches = sscanf(s.c_str(), "%d%c", &i, &c);
+	int matches = sscanf_s(s.c_str(), "%d%c", &i, &c);
 	return matches == 1 && i >= 0;
 }
 bool isNumber(const string& s) {
 	double d;
 	char c;
-	int matches = sscanf(s.c_str(), "%lf%c", &d, &c);
+	int matches = sscanf_s(s.c_str(), "%lf%c", &d, &c);
 	return matches == 1;
 }
 bool isNonNegativeNumber(const string& s) {
 	double d;
 	char c;
-	int matches = sscanf(s.c_str(), "%lf%c", &d, &c);
+	int matches = sscanf_s(s.c_str(), "%lf%c", &d, &c);
 	return matches == 1 && d >= 0;
 }
 bool isValidItemId(const string& id) {
