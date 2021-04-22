@@ -10,6 +10,9 @@ template<typename T>
 struct Node {
 	T data;
 	Node* next;
+	Node() {
+		next = nullptr;
+	}
 	~Node() {
 		cout << "Destroy node" << data << endl;
 	}
@@ -61,7 +64,7 @@ public:
 	}
 	// O(1)
 	void deleteHead() {
-		// Store the pointer to head that can be deleted later
+		// Store the pointer to current head so that it can be deleted later
 		Node<T>* tmp = head;
 		// Assign head of list to head's next node
 		head = head->next;

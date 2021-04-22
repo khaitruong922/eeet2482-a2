@@ -139,14 +139,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Customer.cpp" />
+    <ClCompile Include="input.cpp" />
     <ClCompile Include="Item.cpp" />
     <ClCompile Include="List.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Account.cpp" />
     <ClCompile Include="StoreManager.cpp" />
     <ClCompile Include="validator.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="input.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="validator.h" />
   </ItemGroup>

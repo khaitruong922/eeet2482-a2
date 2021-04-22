@@ -1,478 +1,539 @@
 #include <iostream>
 #include <string>
 #include <fstream>
-#include "Account.cpp"
+#include "Customer.cpp"
 #include "validator.h"
+#include "input.h"
 
 using namespace std;
 
 #ifndef STORE_MANAGER
 #define STORE_MANAGER
 class StoreManager {
-private:
-	string customers_file_name;
-	string items_file_name;
-	List<Account*>* accounts;
-	List<Item*>* items;
-public:
-	~StoreManager() {
-		cout << "Delete store manager" << endl;
-		// TODO: delete accounts pointers
-		// TODO: delete items pointers
-		delete accounts;
-		delete items;
-	}
-	StoreManager(const string& customers_file_name, const string& items_file_name) {
-		this->customers_file_name = customers_file_name;
-		this->items_file_name = items_file_name;
-		accounts = new List<Account*>();
-		items = new List<Item*>();
-	}
-	bool loadDataFromFiles() {
-		if (!loadItemsFromFile()) return false;
-		if (!loadCustomersFromFile()) return false;
-		return true;
-	}
-	bool loadCustomersFromFile() {
-		ifstream infile(customers_file_name);
-		if (!infile)
-		{
-			cout << "Cannot open file " << customers_file_name << endl;
-			return false;
-		}
-		cout << "Customers file: " << customers_file_name << endl;
+  public:
+    StoreManager(const string& customers_file_name, const string& items_file_name) {
+      this->customers_file_name = customers_file_name;
+      this->items_file_name = items_file_name;
+      customers = new List<Customer*>();
+      items = new List<Item*>();
+    }
 
-		infile.close();
-		return true;
-	}
-	bool loadItemsFromFile() {
-		ifstream infile(items_file_name);
-		if (!infile)
-		{
-			cout << "Cannot open file " << items_file_name << endl;
-			return false;
-		}
-		cout << "Items file: " << items_file_name << endl;
-		string line;
-		string field;
-		string delim = ",";
-		while (getline(infile, line)) {
-			int start = 0;
-			int end = line.find(delim);
-			int i = 0;
-			string fields[7];
-			// Loop until there are 6 fields
-			while (end != string::npos && i < 7) {
-				string field = line.substr(start, end - start);
-				start = end + delim.length();
-				end = line.find(delim, start);
-				fields[i] = field;
-				i++;
-			}
-			// Get last field
-			fields[i] = line.substr(start, end - start);
-			i++;
-			// Skip the line if there are invalid number of fields
-			if (i < 6) continue;
-			// Skip the line if number of copies <= 0
-			if (!isNonNegativeInteger(fields[4])) continue;
-			if (!isNonNegativeNumber(fields[5])) continue;
+    ~StoreManager() {
+      cout << "Delete store manager" << endl;
+      // TODO: delete accounts pointers
+      // TODO: delete items pointers
+      delete customers;
+      delete items;
+  }
+  
+    void displayMenu()
+    {
+      // Print out menu options
+      cout << "-------------------------------" << endl;
+      cout << "Welcome to Genie's video store" << endl;
+      cout << "Enter an option below" << endl;
+      cout << "1. Add a new item, update or delete an existing one" << endl;
+      cout << "2. Add new customer or update an existing customer" << endl;
+      cout << "3. Promote an existing customer" << endl;
+      cout << "4. Rent an item" << endl;
+      cout << "5. Return an item" << endl;
+      cout << "6. Display all items" << endl;
+      cout << "7. Display out-of-stock items" << endl;
+      cout << "8. Display all customers" << endl;
+      cout << "9. Display group of customers" << endl;
+      cout << "10. Search items or customers" << endl;
+      cout << "11. Exit" << endl;
+      // Ask for user input
+      int option = getOptionInput(1, 11);
+      if (option == 1) displayItemMenu();
+      else if (option == 2) displayCustomerMenu();
+      else if (option == 3) promoteCustomer();
+      else if (option == 4) rentItem();
+      else if (option == 5) returnItem();
+      else if (option == 6) displayAllItems();
+      else if (option == 7) displayOutOfStockItems();
+      else if (option == 8) displayAllCustomers();
+      else if (option == 9) displayGroupOfCustomers();
+      else if (option == 10) displaySearchMenu();
+      else if (option == 11){
+        exit();
+        return;
+      }
+      displayMenu();
+    }
+    bool loadDataFromFiles() {
+      if (!loadItemsFromFile()) return false;
+      if (!loadCustomersFromFile()) return false;
+      return true;
+    }
+  private:
+    // Members
+    string customers_file_name;
+    string items_file_name;
+    List<Customer*>* customers;
+    List<Item*>* items;
 
-			// Without genre: 6, with genre: 7
-			string id = fields[0];
-			string title = fields[1];
-			string rentalType = fields[2];
-			string loanType = fields[3];
-			int numberOfCopies = stoi(fields[4]);
-			double rentalFee = stod(fields[5]);
-			string genre = fields[6];
-			Item* item = createItem(id, title, rentalType, loanType, numberOfCopies, rentalFee, genre);
-			// Skip if the item cannot be created
-			if (item == nullptr) continue;
+    bool loadCustomersFromFile() {
+      ifstream infile(customers_file_name);
+      if (!infile)
+      {
+        cout << "Cannot open file " << customers_file_name << endl;
+        return false;
+      }
+      cout << "Customers file: " << customers_file_name << endl;
 
-			// TODO: Check if item ID exists
-			if (false) {
-				delete item;
-			}
-			items->add(item);
-		}
-		infile.close();
-		return true;
-	}
+      string line;
+      string delim = ",";
 
-	void saveData() {
-		saveItems();
-		saveCustomers();
-	}
-	void saveCustomers() {
-		ofstream outfile(customers_file_name);
-		if (!outfile)
-		{
-			cout << "Cannot save file " << customers_file_name << endl;
-		}
-	}
-	void saveItems() {
-		ofstream outfile(items_file_name);
-		if (!outfile)
-		{
-			cout << "Cannot save file " << items_file_name << endl;
-		}
-	}
+      Customer* lastCustomer = nullptr;
+      while (getline(infile, line)) {
+        // Check if line is item ID
+        if (isValidItemId(line)){
+          if(lastCustomer) lastCustomer->getItemIds()->add(line);
+          continue;
+        }
+        // If not, line is customer info
+        int start = 0;
+        int end = line.find(delim);
+        int i = 0;
+        string fields[6];
+        // Loop until there are 6 fields
+        while (end != string::npos && i < 6) {
+          string field = line.substr(start, end - start);
+          start = end + delim.length();
+          end = line.find(delim, start);
+          fields[i] = field;
+          i++;
+        }
+        // Get last field
+        fields[i] = line.substr(start, end - start);
+        i++;
+        // Skip if there are not enough fields
+        if (i<6) continue;
+        string id = fields[0];
+        // Skip if id already exists
+        if (customerExists(id)) continue;
+        string name = fields[1];
+        string address = fields[2];
+        string phoneNumber = fields[3];
+        string type = fields[5];
+        Customer* customer = createCustomer(id,name,address,phoneNumber,type);
+        // Skip if the customer cannot be created
+        if (customer == nullptr){
+          lastCustomer = nullptr;
+          delete customer;
+          continue;
+        }
+        customers->add(customer);
+        lastCustomer = customer;
+      }
+      infile.close();
+      return true;
+    }
 
-	Item* createItem(const string& id, const string& title, const string& rentalType, const string& loanType, int numberOfCopies, double rentalFee, const string& genre) {
-		if (rentalType == "Record") {
-			return new Record(id, title, loanType, numberOfCopies, rentalFee, genre);
-		}
-		else if (rentalType == "DVD") {
-			return new DVD(id, title, loanType, numberOfCopies, rentalFee, genre);
-		}
-		else if (rentalType == "Game") {
-			return new Game(id, title, loanType, numberOfCopies, rentalFee);
-		}
-		else {
-			// Skip the line if the rental type is not valid
-			return nullptr;
-		}
-	}
+    bool loadItemsFromFile() {
+      ifstream infile(items_file_name);
+      if (!infile)
+      {
+        cout << "Cannot open file " << items_file_name << endl;
+        return false;
+      }
+      cout << "Items file: " << items_file_name << endl;
+      string line;
+      string delim = ",";
+      while (getline(infile, line)) {
+        int start = 0;
+        int end = line.find(delim);
+        int i = 0;
+        string fields[7];
+        // Loop until there are 6 fields
+        while (end != string::npos && i < 7) {
+          string field = line.substr(start, end - start);
+          start = end + delim.length();
+          end = line.find(delim, start);
+          fields[i] = field;
+          i++;
+        }
+        // Get last field
+        fields[i] = line.substr(start, end - start);
+        i++;
+        // Skip the line if there are invalid number of fields
+        if (i < 6) continue;
+        // Skip the line if number of copies <= 0
+        if (!isNonNegativeInteger(fields[4])) continue;
+        if (!isNonNegativeNumber(fields[5])) continue;
 
+        // Without genre: 6, with genre: 7
+        string id = fields[0];
+        //Skip if the item id alreasy exists
+        if (itemExists(id)) {
+          continue;
+        }
+        string title = fields[1];
+        string rentalType = fields[2];
+        string loanType = fields[3];
+        int numberOfCopies = stoi(fields[4]);
+        double rentalFee = stod(fields[5]);
+        string genre = fields[6];
+        Item* item = createItem(id, title, rentalType, loanType, numberOfCopies, rentalFee, genre);
+        // Skip if the item cannot be created
+        if (item == nullptr){
+          delete item;
+          continue;
+        }
+        items->add(item);
+      }
+      infile.close();
+      return true;
+    }
 
-	// Menu functions
+    void saveData() {
+      // saveItems();
+      // saveCustomers();
+    }
+    void saveCustomers() {
+      ofstream outfile(customers_file_name);
+      if (!outfile)
+      {
+        cout << "Cannot save file " << customers_file_name << endl;
+        return;
+      }
 
-	  // 1
-	// 1.1
-	void addItem()
-	{
-		cout << "-------------------------------" << endl;
-		cout << "Select item type" << endl;
-		cout << "1. Record" << endl;
-		cout << "2. DVD" << endl;
-		cout << "3. Game" << endl;
+      outfile.close();
+    }
+    void saveItems() {
+      ofstream outfile(items_file_name);
+      if (!outfile)
+      {
+        cout << "Cannot save file " << items_file_name << endl;
+        return;
+      }
 
-		bool valid = true;
-		string optionInput;
-		int option;
-		do {
-			if (!valid) {
-				cout << "Invalid input!" << endl;
-			}
-			cout << "Your option: ";
-			cin >> optionInput;
-			valid = isNonNegativeInteger(optionInput);
-			if (!valid) continue;
-			option = stoi(optionInput);
-			valid = option >= 1 && option <= 3;
-		} while (!valid);
+      outfile.close();
+    }
+    // Return the item pointer from parameters, return nullptr if the rental type is not Record, DVD or Game
+    Item* createItem(const string& id, const string& title, const string& rentalType, const string& loanType, int numberOfCopies, double rentalFee, const string& genre) {
+      if (rentalType == "Record") return new Record(id, title, loanType, numberOfCopies, rentalFee, genre);
+      if (rentalType == "DVD") return new DVD(id, title, loanType, numberOfCopies,rentalFee, genre);
+      if (rentalType == "Game") return new Game(id, title, loanType, numberOfCopies, rentalFee);
+      return nullptr;
+    }
+    
+    // Return the customer pointer from parameters, return nullptr if the account type is not Guest, Regular or VIP
+    Customer* createCustomer(const string& id, const string& name, const string& address, const string& phoneNumber, const string& type){
+      if (type == "Guest") return new GuestCustomer(id,name,address,phoneNumber);
+      if (type == "Regular") return new RegularCustomer(id,name,address,phoneNumber);
+      if (type == "VIP") return new VIPCustomer(id,name,address,phoneNumber);
+      return nullptr;
+    }
 
-		string rentalType = "";
-		switch (option)
-		{
-		case 1:
-			rentalType = "Record";
-			break;
-		case 2:
-			rentalType = "DVD";
-			break;
-		case 3:
-			rentalType = "Game";
-			break;
-		}
-		string id, title, loanType, numberOfCopiesInput, rentalFeeInput, genre;
-		do {
-			if (!valid) {
-				cout << "Please match the following format: Ixxx-yyyy (xxx: unique 3-digit code, yyyy: published year)" << endl;
-			}
-			cout << "Item ID: ";
-			cin >> id;
-			valid = isValidItemId(id);
-			// Check unique id
-		} while (!valid);
+    Item* getItemById(const string& id){
+      auto head = items->getHead();
+      while(head){
+        if (head->data->getId()==id) return head->data;
+        head = head->next;
+      }
+      return nullptr;
+    }
 
-		cout << "Title: ";
-		cin >> title;
+    bool itemExists(const string& id){return getItemById(id) != nullptr;}
+    string getNonExistItemIdInput(){
+      string input;
+      while(true){
+        input = getItemIdInput();
+        if (!itemExists(input)) return input;
+        cout << "Item ID " << input << " already exists!" << endl;
+      }
+      return input;
+    }
+    string getExistItemIdInput(){
+      string input;
+      while(true){
+        input = getItemIdInput();
+        if (itemExists(input)) return input;
+        cout << "Item ID " << input << " does not exist!" << endl;
+      }
+      return input;
+    }
 
-		cout << "Loan type: ";
-		cin >> loanType;
+    Customer* getCustomerById(const string& id){
+      auto head = customers->getHead();
+      while(head){
+        if (head->data->getId()==id) return head->data;
+        head = head->next;
+      }
+      return nullptr;
+    }
 
-		do {
-			if (!valid) {
-				cout << "Number of copies must be a non-negative integer!" << endl;
-			}
-			cout << "Number of copies: ";
-			cin >> numberOfCopiesInput;
-			valid = isNonNegativeInteger(numberOfCopiesInput);
-		} while (!valid);
+    string getNonExistCustomerIdInput(){
+      string input;
+      while(true){
+        input = getCustomerIdInput();
+        if (!customerExists(input)) return input;
+        cout << "Customer ID " << input << " already exists!" << endl;
+      }
+      return input;
+    }
 
-		do {
-			if (!valid) {
-				cout << "Rental fee must be a non-negative number!" << endl;
-			}
-			cout << "Rental fee: ";
-			cin >> rentalFeeInput;
-			valid = isNonNegativeNumber(rentalFeeInput);
-		} while (!valid);
+    string getExistCustomerIdInput(){
+      string input;
+      while(true){
+        input = getCustomerIdInput();
+        if (customerExists(input)) return input;
+        cout << "Customer ID " << input << " does not exist!" << endl;
+      }
+      return input;
+    }
 
-		if (rentalType != "Game") {
-			cout << "Genre: ";
-			cin >> genre;
-		}
+    bool customerExists(const string& id){return getCustomerById(id)!= nullptr;}
 
-		int numberOfCopies = stoi(numberOfCopiesInput);
-		double rentalFee = stod(rentalFeeInput);
+    // Menu functions
 
-		Item* item = createItem(id, title, rentalType, loanType, numberOfCopies, rentalFee, genre);
+    // 1.1 - done?
+    void addItem()
+    {
+      cout << "-------------------------------" << endl;
+      cout << "Select item type" << endl;
+      cout << "1. Record" << endl;
+      cout << "2. DVD" << endl;
+      cout << "3. Game" << endl;
+      cout << "or" << endl;
+      cout << "4. Back" << endl;
+    // ngan gon
+      int option = getOptionInput(1, 4);
+      string rentalType = "";
+      switch (option)
+      {
+      case 1:
+        rentalType = "Record";
+        break;
+      case 2:
+        rentalType = "DVD";
+        break;
+      case 3:
+        rentalType = "Game";
+        break;
+      case 4:
+        return;
+      }
+      string id = getNonExistItemIdInput();
+      string title = getItemTitleInput();
+      string loanType = getItemLoanTypeInput();
+      int numberOfCopies = getItemNumberOfCopiesInput();
+      double rentalFee = getItemRentalFeeInput();
+      string genre;
+      if (rentalType != "Game") {
+        genre = getItemGenreInput();
+      }
+      Item* item = createItem(id, title, rentalType, loanType, numberOfCopies, rentalFee, genre);
+      items->add(item);
+      cout << "Add item " << id << " succesfully!" << endl;;
+    }
 
-		if (item == nullptr) {
-			cout << "Cannot add item " << id << endl;
-			return;
-		}
+    // 1.2 
+    void updateItem()
+    {
+      cout << "------------------------" << endl;
+      cout << "1. Update title" << endl;
+      cout << "2. Update loan type" << endl;
+      cout << "3. Update rental fee" << endl;
+      cout << "4. Update genre" << endl;
+      cout << "5. Back "<< endl;
+      int option = getOptionInput(1, 5);
+      string id; 
+    }
 
-		items->add(item);
-		cout << "Add item " << id << " succesfully!" << endl;;
-	}
+    // 1.3 - Thuy / Quy
+    void deleteItem()
+    {
+      string id = getExistItemIdInput();
+    }
 
-	// 1.2
-	void updateItem()
-	{
-		cout << "Update item" << endl;
-	}
+    // 1.4 - done
+    void addItemToStock()
+    {
+      string id = getExistItemIdInput();
+      int numberOfCopies = getItemNumberOfCopiesInput();
+      Item* item = getItemById(id);
+      item->addToStock(numberOfCopies);
+    }
 
-	// 1.3
-	void deleteItem()
-	{
-		cout << "Delete item" << endl;
-	}
+    // Menu
+    void displayItemMenu()
+    {
+      cout << "-------------------------------" << endl;
+      cout << "Manage items" << endl;
+      cout << "1. Add new item" << endl;
+      cout << "2. Add item to stock" << endl;
+      cout << "3. Update item" << endl;
+      cout << "4. Delete item" << endl;
+      cout << "5. Back" << endl;
 
-	// Menu
-	void displayItemMenu()
-	{
-		cout << "-------------------------------" << endl;
-		cout << "Manage items" << endl;
-		cout << "1. Add item" << endl;
-		cout << "2. Update item" << endl;
-		cout << "3. Delete item" << endl;
-		cout << "4. Back" << endl;
+      int option = getOptionInput(1,5);
+      if (option == 1) addItem();
+      else if (option ==2) addItemToStock();
+      else if (option ==3) updateItem();
+      else if (option ==4) deleteItem();
+      else if (option ==5) return;
+      displayItemMenu();
+    }
 
-		bool valid = true;
-		string optionInput;
-		int option;
-		do {
-			if (!valid) {
-				cout << "Invalid input!" << endl;
-			}
-			cout << "Your option: ";
-			cin >> optionInput;
-			valid = isNonNegativeInteger(optionInput);
-			if (!valid) continue;
-			option = stoi(optionInput);
-			valid = option >= 1 && option <= 4;
-		} while (!valid);
+    // 2
+    // 2.1
+    void addCustomer()
+    {
+      string id = getNonExistCustomerIdInput();
+      string name = getCustomerNameInput();
+      string phoneNumber = getCustomerPhoneNumberInput();
+      string address = getCustomerAddressInput();
+      string type = "Guest";
+      Customer* customer = createCustomer(id,name,address,phoneNumber,type);
+      if (customer == nullptr){
+        cout << "Cannot add customer " << id << endl;
+        delete customer;
+        return;
+      }
+      customers->add(customer);
+      cout << "Add customer " << id << " successfully!" << endl;
+    }
 
-		if (option == 4)
-			return;
-		switch (option) {
-		case 1:
-			addItem();
-			break;
-		case 2:
-			updateItem();
-			break;
-		case 3:
-			deleteItem();
-			break;
-		default:
-			cout << "Please enter an option in range [1-4]!" << endl;
-			break;
-		}
-		displayItemMenu();
-	}
+    // 2.2
+    void updateCustomer()
+    {
+      cout << "Update customer" << endl;
+    }
 
-	// 2
-	// 2.1
-	void addCustomer()
-	{
-		cout << "Add customer" << endl;
-	}
+    // Menu
+    void displayCustomerMenu()
+    {
+      cout << "-------------------------------" << endl;
+      cout << "Manage customers" << endl;
+      cout << "1. Add customer" << endl;
+      cout << "2. Update customer" << endl;
+      cout << "3. Back" << endl;
+      int option = getOptionInput(1, 3);
+      if (option == 1) addCustomer();
+      else if (option==2) updateCustomer();
+      else if (option ==3) return;
+      displayCustomerMenu();
+    }
 
-	// 2.2
-	void updateCustomer()
-	{
-		cout << "Update customer" << endl;
-	}
+    // 3
+    void promoteCustomer()
+    {
+      cout << "Promote customer" << endl;
+    }
 
-	// Menu
-	void displayCustomerMenu()
-	{
-		cout << "-------------------------------" << endl;
-		cout << "Manage customers" << endl;
-		cout << "Enter an option below" << endl;
-		cout << "1. Add customer" << endl;
-		cout << "2. Update customer" << endl;
-		cout << "3. Back" << endl;
+    // 4
+    void rentItem()
+    {
+      cout << "Rent item" << endl;
+    }
 
-		bool valid = true;
-		string optionInput;
-		int option;
-		do {
-			if (!valid) {
-				cout << "Invalid input!" << endl;
-			}
-			cout << "Your option: ";
-			cin >> optionInput;
-			valid = isNonNegativeInteger(optionInput);
-			if (!valid) continue;
-			option = stoi(optionInput);
-			valid = option >= 1 && option <= 3;
-		} while (!valid);
+    // 5
+    void returnItem()
+    {
+      cout << "Return item" << endl;
+    }
 
-		if (option == 3)
-			return;
-		switch (option) {
-		case 1:
-			addCustomer();
-			break;
-		case 2:
-			updateCustomer();
-			break;
-		default:
-			cout << "Please enter an option in range [1-3]!" << endl;
-			break;
-		}
-		displayCustomerMenu();
-	}
+    // 6 - TODO: sort by id, title
+    void displayAllItems()
+    {
+      auto head = items->getHead();
+      while (head) {
+        cout << head->data->toString();
+        head = head->next;
+      }
+    }
 
-	// 3
-	void promoteCustomer()
-	{
-		cout << "Promote customer" << endl;
-	}
+    // 7 - TODO: sort by id, title 
+    /*
+    • The ability to display all items, sorted by titles or IDs.
+    */
+    void displayOutOfStockItems()
+    {
+      auto head = items->getHead();
+      while (head) {
+        // Only print the item if it is out of stock
+        if (!head->data->isAvailable()) cout << head->data->toString();
+        head = head->next;
+      }
+    }
 
-	// 4
-	void rentItem()
-	{
-		cout << "Rent item" << endl;
-	}
+    //8 - TODO: sort by id, name
+    void displayAllCustomers()
+    {
+      auto head = customers->getHead();
+      while (head) {
+        cout << head->data->toString();
+        head = head->next;
+      }
+    }
 
-	// 5
-	void returnItem()
-	{
-		cout << "Return item" << endl;
-	}
+    // 9
+    void displayGroupOfCustomers()
+    {
+      cout << "-------------------------------" << endl;
+      cout << "Select customer group" << endl;
+      cout << "1. Guest" << endl;
+      cout << "2. Regular" << endl;
+      cout << "3. VIP" << endl;
+      cout << "or " << endl;
+      cout << "4. Back" << endl;
 
-	// 6
-	void displayAllItems()
-	{
-		auto head = items->getHead();
-		while (head) {
-			cout << head->data->toString() << endl;
-			head = head->next;
-		}
-	}
+      int option = getOptionInput(1, 4);
+      string type;
+      if (option == 1) type = "Guest";
+      else if (option ==2) type = "Regular";
+      else if (option == 3) type = "VIP";
+      else if (option ==4) return;
+      auto head = customers->getHead();
+      while (head) {
+        if(head->data->getType() == type) cout << head->data->toString();
+        head = head->next;
+      }
+    }
 
-	// 7
-	void displayOutOfStockItems()
-	{
-		cout << "Display out of stock items" << endl;
-	}
+    // 10
+    void displaySearchMenu()
+    {
+      cout << "-------------------------------" << endl;
+      cout << "1. Search item by id" << endl;
+      cout << "2. Search item by title" << endl;
+      cout << "3. Search customer by id" << endl;
+      cout << "4. Search customer by name" << endl;
+      cout << "5. Back" << endl;
+    }
 
-	//8
-	void displayAllCustomers()
-	{
-		cout << "Display all customers" << endl;
-	}
+    void searchItemById(){
+      string id = getItemIdInput();
+      Item *item = getItemById(id);
+      if (item == nullptr){
+        cout << "Item with id " << id  << " does not exist!" << endl;
+      }
+    }
+    void searchItemByTitle(){
+      
+    }
 
-	// 9
-	void displayGroupOfCustomers()
-	{
-		cout << "Display group of customers" << endl;
-	}
+    void searchCustomerById(){
 
-	// 10
-	void displaySearchMenu()
-	{
-		cout << "Display search menu" << endl;
-	}
+    }
 
-	// Exit
-	void exit()
-	{
-		cout << "ASSIGNMENT 2 GROUP 26" << endl;
-		cout << "s3818074, s3818074@rmit.edu.vn, Khai, Truong" << endl;
-		cout << "s3878636, s3878636@rmit.edu.vn, Quy, Nguyen" << endl;
-		cout << "s3877746, s3877746@rmit.edu.vn, Thuy, Mai" << endl;
-		cout << "s3905273, s3905273@rmit.edu.vn, Nam, Pham" << endl;
-		saveData();
-	}
+    void searchCustomerByName(){
 
-	void displayMenu()
-	{
-		// Print out menu options
-		cout << "-------------------------------" << endl;
-		cout << "Welcome to Genie's video store" << endl;
-		cout << "Enter an option below" << endl;
-		cout << "1. Add a new item, update or delete an existing one" << endl;
-		cout << "2. Add new customer or update an existing customer" << endl;
-		cout << "3. Promote an existing customer" << endl;
-		cout << "4. Rent an item" << endl;
-		cout << "5. Return an item" << endl;
-		cout << "6. Display all items" << endl;
-		cout << "7. Display out-of-stock items" << endl;
-		cout << "8. Display all customers" << endl;
-		cout << "9. Display group of customers" << endl;
-		cout << "10. Search items or customers" << endl;
-		cout << "Type Exit to quit the program" << endl;
-		// Ask for user input
-		bool valid = true;
-		string optionInput;
-		int option;
-		do {
-			if (!valid) {
-				cout << "Invalid input!" << endl;
-			}
-			cout << "Your option: ";
-			cin >> optionInput;
-			if (optionInput == "Exit") {
-				exit();
-				return;
-			}
-			valid = isNonNegativeInteger(optionInput);
-			if (!valid) continue;
-			option = stoi(optionInput);
-			valid = option >= 1 && option <= 10;
-		} while (!valid);
+    }
 
-		switch (option) {
-		case 1:
-			displayItemMenu();
-			break;
-		case 2:
-			displayCustomerMenu();
-			break;
-		case 3:
-			promoteCustomer();
-			break;
-		case 4:
-			rentItem();
-			break;
-		case 5:
-			returnItem();
-			break;
-		case 6:
-			displayAllItems();
-			break;
-		case 7:
-			displayOutOfStockItems();
-			break;
-		case 8:
-			displayAllCustomers();
-			break;
-		case 9:
-			displayGroupOfCustomers();
-			break;
-		case 10:
-			displaySearchMenu();
-			break;
-		}
-		displayMenu();
-	}
+    // 11
+    void exit()
+    {
+      cout << "ASSIGNMENT 2 GROUP 26" << endl;
+      cout << "s3818074, s3818074@rmit.edu.vn, Khai, Truong" << endl;
+      cout << "s3878636, s3878636@rmit.edu.vn, Quy, Nguyen" << endl;
+      cout << "s3877746, s3877746@rmit.edu.vn, Thuy, Mai" << endl;
+      cout << "s3905273, s3905273@rmit.edu.vn, Nam, Pham" << endl;
+      saveData();
+    }
+
 };
 #endif
