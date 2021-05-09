@@ -1,88 +1,41 @@
+#pragma warning(disable : 4996)
 #include <iostream>
-#include <string>
-#include <fstream>
-#include <string.h>
-#include "validator.h"
-#include "List.cpp"
+#include <sstream>
+#include "Item.h"
 using namespace std;
+Item::Item(const string& id, const string& title, const string& rentalType, const string& loanType, int totalNumberOfCopies, double rentalFee, string genre) {
+    this->id = id;
+    this->title = title;
+    this->rentalType = rentalType;
+    this->loanType = loanType;
+    this->totalNumberOfCopies = totalNumberOfCopies;
+    this->currentNumberOfCopies = totalNumberOfCopies;
+    this->rentalFee = rentalFee;
+    this->genre = genre;
+}
+string Item::getRentalFeeString() const {
+    int str_len = to_string(rentalFee).length();
+    char* cptr = new char[str_len];
+    sprintf(cptr, "%.2lf", rentalFee);
+    string s = cptr;
+    delete[] cptr;
+    return s;
+}
 
-#ifndef ITEM
-#define ITEM
-
-class Item
+string Item::toString() const
 {
-  private:
-    string id;
-    string title;
-    string rentalType;
-    string loanType;
-    int numberOfCopies;
-    double rentalFee;
-    string genre;
-
-  public:
-    //Destructor
-    ~Item(){
-      cout << "Destroy item " << title << endl;
-    }
-    Item(const string& id, const string& title, const string& rentalType, const string& loanType, int numberOfCopies,double rentalFee, string genre){
-      this->id = id;
-      this->title = title;
-      this->rentalType = rentalType;
-      this->loanType = loanType;
-      this->numberOfCopies = numberOfCopies;
-      this->rentalFee = rentalFee;
-      this->genre = genre;
-    }
-    // Getters
-    string getId()const {return id;}
-    string getTitle()const{return title;}
-    string getRentalType()const{return rentalType;}
-    string getLoanType()const{return loanType;}
-    int getNumberOfCopies()const{return numberOfCopies;}
-    double getRentalFee()const{return rentalFee;}
-    string getGenre()const{return genre;}
-    bool isAvailable()const {return numberOfCopies>=0;}
-    // Setters
-    void setId(const string& id){this->id=id;}
-    void setTitle(const string& title){this->title=title;}
-    void setRentalType(const string& rentalType){this->rentalType=rentalType;}
-    void setLoanType(const string& loanType){this->loanType=loanType;}
-    void setNumberOfCopies(int numberOfCopies){this->numberOfCopies=numberOfCopies;}
-    void setRentalFee(double rentalFee){this->rentalFee = rentalFee;}
-    void setGenre(string genre){this->genre= genre;}
-    // Methods
-    void addToStock(int numberOfCopies)
-    {
-        this->numberOfCopies += numberOfCopies;
-        
-    }
-    string toString()
-    {
-      return id + "," + title + "," + rentalType + "," + loanType + "," + to_string(numberOfCopies) + "," + to_string(rentalFee) + "," + genre + "\n";
-    };
-};
-class Record: public Item
-{
-    public:
-      Record(const string& id, const string& title, const string& loanType, int numberOfCopies,double rentalFee, string genre):Item(id,title,"Record",loanType,numberOfCopies,rentalFee,genre){
-        
-      }
+    stringstream ss;
+    ss << id << "," << title << "," << rentalType << "," << loanType << "," << totalNumberOfCopies << "," << getRentalFeeString();
+    if (genre != "") ss << "," << genre;
+    ss << endl;
+    return ss.str();
 };
 
-class DVD : public Item
-{
-    public:
-      DVD(const string& id, const string& title, const string& loanType, int numberOfCopies,double rentalFee, string genre):Item(id,title,"DVD",loanType,numberOfCopies,rentalFee,genre){
-        
-      }
-};
+string Item::toConsoleString() const {
+    return toString();
+}
 
-class Game: public Item
+string Item::toFileContent() const
 {
-    public:
-      Game(const string& id, const string& title, const string& loanType, int numberOfCopies,double rentalFee):Item(id,title,"Game",loanType,numberOfCopies,rentalFee,""){
-        
-      }
+    return toString();
 };
-#endif

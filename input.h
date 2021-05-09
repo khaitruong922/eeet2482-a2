@@ -12,4 +12,8 @@ string getCustomerIdInput();
 string getCustomerNameInput();
 string getCustomerAddressInput();
 string getCustomerPhoneNumberInput();
+bool getYesNoInput();
 int getOptionInput(int min, int max);
+int getOptionInput(int min, int max, string exitString);
+void waitForEnter();
+string trim(const string& s);

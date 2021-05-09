@@ -1,81 +1,66 @@
 #include <iostream>
-#include <string>
-#include <fstream>
-#include "Item.cpp"
-#include "List.cpp"
+#include <sstream>
+#include "Customer.h"
 using namespace std;
 
-#ifndef CUSTOMER
-#define CUSTOMER
-class Customer
-{
-private:
-	string id;
-	string name;
-	string address;
-	string phoneNumber;
-	string type;
-	List<string>* itemIds;
-public:
-	Customer(const string& id, const string& name, const string& address, const string& phoneNumber, const string& type) {
-		this->id = id;
-		this->name = name;
-		this->address = address;
-		this->phoneNumber = phoneNumber;
-		this->type = type;
-		itemIds = new List<string>();
-	}
-	~Customer() {
-		cout << "Destroy account " << name << endl;
-		delete itemIds;
-	}
-	// Getters
-	string getId()const { return id; }
-	string getName()const { return name; }
-	string getAddress()const { return address; }
-	string getPhoneNumber()const { return phoneNumber; }
-	string getType() const { return type; }
-	List<string>* getItemIds() { return itemIds; }
-	// Setters
-	void setId(const string& id) { this->id = id; }
-	void setName(const string& name) { this->name = name; }
-	void setAddress(const string& address) { this->address = address; }
-	void setPhoneNumber(const string& phoneNumber) { this->phoneNumber = phoneNumber; }
-	// Methods
-	string toString() {
-		// string items_str;
-		// auto head = itemIds->getHead();
-		// while (head){
-		//   items_str += head->data + "\n";
-		//   head = head->next;
-		// }
-		return id + "," + name + "," + address + "," + phoneNumber + "," + to_string(itemIds->getSize()) + "," + type + "\n";
-	}
-};
-class GuestCustomer : public Customer
-{
-public:
-	GuestCustomer(const string& id, const string& name, const string& address, const string& phoneNumber) : Customer(id, name, address, phoneNumber, "Guest") {
+Customer::Customer(const string& id, const string& name, const string& address, const string& phoneNumber, const string& type) {
+	this->id = id;
+	this->name = name;
+	this->address = address;
+	this->phoneNumber = phoneNumber;
+	this->type = type;
+	this->numberOfReturns = 0;
+	this->points = 100;
+	rentalIds = new List<string>();
+}
 
-	}
-};
-class RegularCustomer : public Customer
-{
-public:
-	RegularCustomer(const string& id, const string& name, const string& address, const string& phoneNumber) : Customer(id, name, address, phoneNumber, "Regular") {
+string Customer::toString() const {
+	stringstream ss;
+	ss << id << "," << name << "," << address << "," << phoneNumber << "," << getNumberOfRentals() << "," << type << endl;
+	return ss.str();
+}
 
+string Customer::getItemIdsString() const {
+	stringstream ss;
+	auto current = rentalIds->getHead();
+	while (current) {
+		ss << current->data << endl;
+		current = current->next;
 	}
-};
-class VIPCustomer : public Customer
-{
-private:
-	int point;
-public:
-public:
-	VIPCustomer(const string& id, const string& name, const string& address, const string& phoneNumber) : Customer(id, name, address, phoneNumber, "VIP") {
-		this->point = 0;
-	}
-	int getPoint() const { return point; }
-};
+	return ss.str();
+}
 
-#endif
+string Customer::toConsoleString() const {
+	stringstream ss;
+	ss << "Customer: " << toString();
+	ss << "Number of rentals: " << getRentalIds()->getSize() << endl;
+	ss << getItemIdsString();
+	return ss.str();
+}
+
+string Customer::toFileContent() const {
+	stringstream ss;
+	ss << toString() << getItemIdsString();
+	return ss.str();
+}
+
+void Customer::rentItem(const string& itemId) {
+	rentalIds->add(itemId);
+}
+
+bool Customer::returnItem(const string& itemId) {
+	int i = 0;
+	auto node = rentalIds->getHead();
+	while (node) {
+		if (node->data == itemId) {
+			rentalIds->deleteNode(i);
+			numberOfReturns++;
+			addPoints(10);
+			return true;
+		}
+		node = node->next;
+		i++;
+	}
+	// If the item cannot be found
+	return false;
+}

@@ -18,6 +18,25 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Customer.h" />
+    <ClInclude Include="input.h" />
+    <ClInclude Include="Item.h" />
+    <ClInclude Include="List.h" />
+    <ClInclude Include="sort.h" />
+    <ClInclude Include="StoreManager.h" />
+    <ClInclude Include="validator.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Customer.cpp" />
+    <ClCompile Include="input.cpp" />
+    <ClCompile Include="Item.cpp" />
+    <ClCompile Include="List.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="sort.cpp" />
+    <ClCompile Include="StoreManager.cpp" />
+    <ClCompile Include="validator.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -138,20 +157,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="Customer.cpp" />
-    <ClCompile Include="input.cpp" />
-    <ClCompile Include="Item.cpp" />
-    <ClCompile Include="List.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="StoreManager.cpp" />
-    <ClCompile Include="validator.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="input.h" />
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="validator.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
