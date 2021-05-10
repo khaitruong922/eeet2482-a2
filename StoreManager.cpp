@@ -611,11 +611,13 @@ void StoreManager::promoteCustomer()
 	Customer* customer = getExistCustomerInput();
 	if (customer->getType() == "VIP") {
 		cout << "VIP customer cannot be promoted!" << endl;
+		waitForEnter();
 		return;
 	}
 	if (!customer->isPromotable()) {
 		cout << "Guest and Regular customer must return 3 items to be promoted!" << endl;
 		cout << "Current number of returns: " << customer->getNumberOfReturns() << endl;
+		waitForEnter();
 		return;
 	}
 
@@ -638,17 +640,20 @@ void StoreManager::rentItem()
 	cout << customer->toConsoleString();
 	if (customer->getType() == "Guest" && customer->getNumberOfRentals() >= 2) {
 		cout << "Guest customer cannot rent more than 2 items at a time!" << endl;
+		waitForEnter();
 		return;
 	}
 	Item* item = getExistItemInput();
 	// Exit if the item is not available
 	if (!item->isAvailable()) {
 		cout << "Item " << item->getId() << " is out of stock!" << endl;
+		waitForEnter();
 		return;
 	}
 	// Exit if a guest customer is trying to rent a 2-day item
 	if (customer->getType() == "Guest" && item->getLoanType() == "2-day") {
 		cout << "Guest customer cannot rent a 2-day item!" << endl;
+		waitForEnter();
 		return;
 	}
 
@@ -689,6 +694,7 @@ void StoreManager::returnItem()
 		cout << "Return item sucessfully!" << endl;
 		item->returned();
 		if (customer->getType() == "VIP") cout << "Receive 10 VIP points! Current VIP points: " << customer->getPoints() << endl;
+		waitForEnter();
 		return;
 	}
 	// If the item is not rented by the customer
