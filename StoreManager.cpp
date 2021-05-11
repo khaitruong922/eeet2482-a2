@@ -192,7 +192,10 @@ bool StoreManager::loadCustomersFromFile() {
 		// Validate the number of rentals
 		string maxNumberOfRentalsString = trim(fields[4]);
 		if (!isNonNegativeInteger(maxNumberOfRentalsString)) continue;
-
+		// Reset the current number of rentals
+		currentNumberOfRentals = 0;
+		// Assign the new max number of rentals
+		maxNumberOfRentals = stoi(maxNumberOfRentalsString);
 		// Get the fields from string array and trim them
 		string name = trim(fields[1]);
 		string address = trim(fields[2]);
