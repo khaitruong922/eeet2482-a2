@@ -245,7 +245,7 @@ int getOptionInput(int min, int max) {
 }
 
 // Overloaded version of the above function, which can accept a special string which will return the value of max+1
-int getOptionInput(int min, int max, string exitString) {
+int getOptionInput(int min, int max, const string& exitString) {
     string input;
     while (true) {
         // Get the input

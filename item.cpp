@@ -3,7 +3,7 @@
 #include <sstream>
 #include "Item.h"
 using namespace std;
-Item::Item(const string& id, const string& title, const string& rentalType, const string& loanType, int totalNumberOfCopies, double rentalFee, string genre) {
+Item::Item(const string& id, const string& title, const string& rentalType, const string& loanType, int totalNumberOfCopies, double rentalFee, const string& genre) {
     this->id = id;
     this->title = title;
     this->rentalType = rentalType;

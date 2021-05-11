@@ -19,7 +19,7 @@ private:
 	string genre;
 
 public:
-	Item(const string& id, const string& title, const string& rentalType, const string& loanType, int totalNumberOfCopies, double rentalFee, string genre);
+	Item(const string& id, const string& title, const string& rentalType, const string& loanType, int totalNumberOfCopies, double rentalFee, const string& genre);
 	// Getters
 	string getId()const { return id; }
 	string getTitle()const { return title; }
@@ -54,7 +54,7 @@ public:
 class Record : public Item
 {
 public:
-	Record(const string& id, const string& title, const string& loanType, int totalNumberOfCopies, double rentalFee, string genre) :Item(id, title, "Record", loanType, totalNumberOfCopies, rentalFee, genre) {
+	Record(const string& id, const string& title, const string& loanType, int totalNumberOfCopies, double rentalFee, const string& genre) :Item(id, title, "Record", loanType, totalNumberOfCopies, rentalFee, genre) {
 
 	}
 };
@@ -62,7 +62,7 @@ public:
 class DVD : public Item
 {
 public:
-	DVD(const string& id, const string& title, const string& loanType, int totalNumberOfCopies, double rentalFee, string genre) :Item(id, title, "DVD", loanType, totalNumberOfCopies, rentalFee, genre) {
+	DVD(const string& id, const string& title, const string& loanType, int totalNumberOfCopies, double rentalFee, const string& genre) :Item(id, title, "DVD", loanType, totalNumberOfCopies, rentalFee, genre) {
 
 	}
 };

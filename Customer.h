@@ -19,7 +19,7 @@ private:
 protected:
 	int points;
 public:
-	Customer(const string& id, const string& name, const string& address, const string& phoneNumber, const string type);
+	Customer(const string& id, const string& name, const string& address, const string& phoneNumber, const string& type);
 	~Customer() { delete rentalIds; }
 	// Getters
 	string getId()const { return id; }

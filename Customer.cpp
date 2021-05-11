@@ -3,7 +3,7 @@
 #include "Customer.h"
 using namespace std;
 
-Customer::Customer(const string& id, const string& name, const string& address, const string& phoneNumber, const string type) {
+Customer::Customer(const string& id, const string& name, const string& address, const string& phoneNumber, const string& type) {
 	this->id = id;
 	this->name = name;
 	this->address = address;
