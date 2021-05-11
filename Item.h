@@ -36,7 +36,7 @@ public:
     void setRentalType(const string& rentalType) { this->rentalType = rentalType; }
     void setLoanType(const string& loanType) { this->loanType = loanType; }
     void setRentalFee(double rentalFee) { this->rentalFee = rentalFee; }
-    void setGenre(string genre) { this->genre = genre; }
+    void setGenre(const string& genre) { this->genre = genre; }
     // Methods
     void addToStock(int numberOfCopies) {
         this->totalNumberOfCopies += numberOfCopies;
@@ -54,7 +54,7 @@ public:
 class Record : public Item
 {
 public:
-    Record(const string& id, const string& title, const string& loanType, int totalNumberOfCopies, double rentalFee, string genre) :Item(id, title, "Record", loanType, totalNumberOfCopies, rentalFee, genre) {
+    Record(const string& id, const string& title, const string& loanType, int totalNumberOfCopies, double rentalFee,const string& genre) :Item(id, title, "Record", loanType, totalNumberOfCopies, rentalFee, genre) {
 
     }
 };
@@ -62,7 +62,7 @@ public:
 class DVD : public Item
 {
 public:
-    DVD(const string& id, const string& title, const string& loanType, int totalNumberOfCopies, double rentalFee, string genre) :Item(id, title, "DVD", loanType, totalNumberOfCopies, rentalFee, genre) {
+    DVD(const string& id, const string& title, const string& loanType, int totalNumberOfCopies, double rentalFee,const string& genre) :Item(id, title, "DVD", loanType, totalNumberOfCopies, rentalFee, genre) {
 
     }
 };

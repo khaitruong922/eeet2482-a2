@@ -52,6 +52,7 @@ bool Customer::returnItem(const string& itemId) {
 	int i = 0;
 	auto node = rentalIds->getHead();
 	while (node) {
+		// If the item can be found
 		if (node->data == itemId) {
 			rentalIds->deleteNode(i);
 			numberOfReturns++;

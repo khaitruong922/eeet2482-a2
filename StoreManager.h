@@ -10,7 +10,7 @@ public:
     bool loadDataFromFiles();
     void displayMenu();
 private:
-    // Members
+    // Database
     string customers_file_name;
     string items_file_name;
     List<Customer*>* customers;
@@ -23,17 +23,15 @@ private:
     void saveCustomers();
     void saveItems();
 
-    // Object creation functions
+    // Object creation methods
     Item* createItem(const string& id, const string& title, const string& rentalType, const string& loanType, int numberOfCopies, double rentalFee, const string& genre);
     Customer* createCustomer(const string& id, const string& name, const string& address, const string& phoneNumber, const string& type);
 
 
-    // Object search functions
+    // Object search methods
     Item* getItemById(const string& id);
-    Item* getItemByTitle(const string& title);
     bool itemExists(const string& id) { return getItemById(id) != nullptr; }
     Customer* getCustomerById(const string& id);
-    Customer* getCustomerByName(const string& name);
     bool customerExists(const string& id) { return getCustomerById(id) != nullptr; }
     int getCustomerIndex(const string& id);
     int getItemIndex(const string& id);
@@ -45,7 +43,7 @@ private:
     Customer* getExistCustomerInput();
 
 
-    // Menu functions
+    // Menu methods
 
     // 1
     void displayItemMenu();
@@ -70,17 +68,16 @@ private:
     // 5
     void returnItem();
 
-    // 6 - TODO: sort by id, title
-    void sortItembyID();
+    // 6
     void displayAllItems();
 
-    // 7 - TODO: sort by id, title 
+    // 7
     void displayOutOfStockItems();
 
-    //8 - TODO: sort by id, name
+    //8
     void displayAllCustomers();
 
-    // 9 - TODO: sort by id, name
+    // 9
     void displayGroupOfCustomers();
 
     // 10
@@ -91,6 +88,6 @@ private:
     void searchCustomerById();
     void searchCustomerByName();
 
-    // 11
+    // Exit
     void exit();
 };

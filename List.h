@@ -19,17 +19,12 @@ public:
 	}
 	~List();
 
-	// O(1)
 	int getSize()const { return size; }
 	int length() const { return size; }
 	Node<T>* getHead() { return head; }
 	Node<T>** getHeadRef() { return &head; }
-	// O(1)
 	void add(const T& value);
-	// O(1)
 	void deleteHead();
-	// O(n)
 	void deleteNode(int index);
-	// O(n)
 	T get(int index);
 };

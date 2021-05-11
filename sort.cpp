@@ -127,7 +127,7 @@ void sortItemsById(Node<Item*>** headRef) {
 	// Sorted List.
 	*headRef = mergedByIdItems(ptr1, ptr2);
 }
-// test cai//oke test di
+
 void sortItemsByTitle(Node<Item*>** headRef) {
 	Node<Item*>* head = *headRef;
 	Node<Item*>* ptr1;
@@ -164,6 +164,7 @@ void sortCustomersById(Node<Customer*>** headRef) {
 	// Sorted List.
 	*headRef = mergedByIdCustomers(ptr1, ptr2);
 }
+
 void sortCustomersByName(Node<Customer*>** headRef) {
 	Node<Customer*>* head = *headRef;
 	Node<Customer*>* ptr1;

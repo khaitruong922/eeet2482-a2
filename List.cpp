@@ -4,27 +4,34 @@ using namespace std;
 
 
 template<typename T>
+// Destructor: deallocate memory of all nodes
 List<T>::~List() {
 	// Assign a temporary node with initial value of head node
 	auto current = head;
 	// Remove all nodes from heap memory
 	while (current) {
+		// Assign the temporary node to current node
 		auto temp = current;
+		// Set the current node to next
 		current = current->next;
+		// Delete temporary node which is the current node
 		delete temp;
 	}
 }
-// O(1)
-// O(1)
+
 template<typename T>
 void List<T>::add(const T& value) {
+	// Create new node
 	Node<T>* tmp = new Node<T>();
+	// Assign data to new node
 	tmp->data = value;
+	// Set the next node of the new node to head
 	tmp->next = head;
+	// Set the head to next node
 	head = tmp;
+	// Incrase the list size
 	size++;
 }
-// O(1)
 template<typename T>
 void List<T>::deleteHead() {
 	// Store the pointer to current head so that it can be deleted later
@@ -55,19 +62,6 @@ void List<T>::deleteNode(int index) {
 	delete before_deleted->next;
 	// Assign the next node of the node before the deleted node to be the node after the deleted note
 	before_deleted->next = after_deleted;
-	size--; // Decrease size of list
-}
-
-// O(n)
-template<typename T>
-T List<T>::get(int index) {
-	if (index >= size) {
-		cerr << "Invalid index access to list" << endl;
-		return nullptr;
-	}
-	Node<T>* current = head;
-	for (int i = 0;i < index;i++) {
-		current = current->next;
-	}
-	return current->data;
+	// Decrease size of list
+	size--;
 }

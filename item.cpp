@@ -13,6 +13,8 @@ Item::Item(const string& id, const string& title, const string& rentalType, cons
     this->rentalFee = rentalFee;
     this->genre = genre;
 }
+
+// Return the rental fee with 2 decimal points
 string Item::getRentalFeeString() const {
     int str_len = to_string(rentalFee).length();
     char* cptr = new char[str_len];

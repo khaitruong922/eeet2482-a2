@@ -13,4 +13,3 @@ bool isValidGenre(const string& s);
 bool hasComma(const string& s);
 bool isNumeric(const string& s);
 bool isAlpha(const string& s);
-bool isAlnum(const string& s);

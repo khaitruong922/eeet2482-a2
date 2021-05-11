@@ -6,24 +6,31 @@
 #include "validator.h"
 #include "input.h"
 #include "sort.h"
+
+// Constructor with 2 database file names as parameters
 StoreManager::StoreManager(const string& customers_file_name, const string& items_file_name) {
 	this->customers_file_name = customers_file_name;
 	this->items_file_name = items_file_name;
+	// Initialize customer and item lists
 	customers = new List<Customer*>();
 	items = new List<Item*>();
 }
 
+// Destructor: clean up all heap memory of customers and items
 StoreManager::~StoreManager() {
+	// Loop over all customers and deallocate their memory
 	auto current_customer_node = customers->getHead();
 	while (current_customer_node) {
 		delete current_customer_node->data;
 		current_customer_node = current_customer_node->next;
 	}
+	// Loop over all items and deallocate their memory
 	auto current_item_node = items->getHead();
 	while (current_item_node) {
 		delete current_item_node->data;
 		current_item_node = current_item_node->next;
 	}
+	// Delete the lists, which will invoke the deletion of all nodes inside the list
 	delete customers;
 	delete items;
 }
@@ -59,19 +66,29 @@ void StoreManager::displayMenu()
 	else if (option == 10) displaySearchMenu();
 	else if (option == 11) {
 		exit();
+		// After exit, return from the function so the menu is not called again
 		return;
 	}
+	// Call the menu again
 	displayMenu();
 }
 
+// Check if the data can be loaded from both files
 bool StoreManager::loadDataFromFiles() {
+	// False if the items data cannot be loaded
 	if (!loadItemsFromFile()) return false;
+	// False if the customer data cannot be loaded
 	if (!loadCustomersFromFile()) return false;
+	// True if both can be loaded
 	return true;
 }
 
+// Read the customers from file and their items and store them inside the list.
+// All fields will be trimmed
 bool StoreManager::loadCustomersFromFile() {
+	// Initialize input file from customer file name
 	ifstream infile(customers_file_name);
+	// Return false if customer file cannot be opened
 	if (!infile)
 	{
 		cout << "Cannot open file " << customers_file_name << endl;
@@ -81,9 +98,12 @@ bool StoreManager::loadCustomersFromFile() {
 	string line;
 	string delim = ",";
 
+	// Track the last customer to insert the items
 	Customer* lastCustomer = nullptr;
+	// Variables to track the number of rentals in the customer row and below the customer row
 	int maxNumberOfRentals = 0;
 	int currentNumberOfRentals = 0;
+	// Loop over all lines in file
 	while (getline(infile, line)) {
 		// Trim line
 		line = trim(line);
@@ -127,17 +147,16 @@ bool StoreManager::loadCustomersFromFile() {
 			continue;
 		}
 
-		// If not, line is customer info
+		// Skip if there is a invalid number of commas for customer row
 		int commaCount = 0;
-		for (int i = 0;i < line.length();i++) {
+		for (int i = 0; i < line.length(); i++) {
 			if (line[i] == ',') commaCount++;
 		}
-
-		// Skip if there are invalid number of commas
 		if (commaCount != 5) continue;
 
-		int start = 0;
-		int end = line.find(delim);
+		// Variables to track field start and end position when parsing the csv row
+		size_t start = 0;
+		size_t end = line.find(delim);
 		int i = 0;
 		string fields[6];
 
@@ -165,14 +184,16 @@ bool StoreManager::loadCustomersFromFile() {
 		// Now the customer is valid
 		// Log the error message if the number of rentals below the customer row does not match the number of rentals in the customer row 
 		if (currentNumberOfRentals != maxNumberOfRentals && lastCustomer != nullptr) {
+			int finalNumberOfRentals = currentNumberOfRentals < maxNumberOfRentals ? currentNumberOfRentals : maxNumberOfRentals;
 			cout << lastCustomer->getId() << ": Number of rentals mismatch. Expected: " << maxNumberOfRentals << ". Actual: " << currentNumberOfRentals << endl;
+			cout << "Program will modify the number of rentals to " << finalNumberOfRentals << endl;
 		}
 
 		// Validate the number of rentals
 		string maxNumberOfRentalsString = trim(fields[4]);
 		if (!isNonNegativeInteger(maxNumberOfRentalsString)) continue;
-		currentNumberOfRentals = 0;
-		maxNumberOfRentals = stoi(maxNumberOfRentalsString);
+
+		// Get the fields from string array and trim them
 		string name = trim(fields[1]);
 		string address = trim(fields[2]);
 		string phoneNumber = trim(fields[3]);
@@ -184,7 +205,9 @@ bool StoreManager::loadCustomersFromFile() {
 			delete customer;
 			continue;
 		}
+		// Store the customer inside the list
 		customers->add(customer);
+		// Assign the last customer to this customer
 		lastCustomer = customer;
 	}
 
@@ -193,12 +216,17 @@ bool StoreManager::loadCustomersFromFile() {
 	if (currentNumberOfRentals != maxNumberOfRentals && lastCustomer != nullptr) {
 		cout << lastCustomer->getId() << ": Number of rentals mismatch. Expected: " << maxNumberOfRentals << ". Actual: " << currentNumberOfRentals << endl;
 	}
+	// Close the input file
 	infile.close();
+	// Return true to notify that the file is successfully loaded
 	return true;
 }
 
+// Read the items from file and store them inside the list
 bool StoreManager::loadItemsFromFile() {
+	// Create the input file from the items file name
 	ifstream infile(items_file_name);
+	// Return false if the items file cannot be opened
 	if (!infile)
 	{
 		cout << "Cannot open file " << items_file_name << endl;
@@ -207,16 +235,19 @@ bool StoreManager::loadItemsFromFile() {
 
 	string line;
 	string delim = ",";
+	// Loop through all fields
 	while (getline(infile, line)) {
+		// Skip if there are invalid number of commas
 		int commaCount = 0;
-		for (int i = 0;i < line.length();i++) {
+		for (int i = 0; i < line.length(); i++) {
 			if (line[i] == ',') commaCount++;
 		}
-		// Skip if there are invalid number of commas
+		// 5: without genre, 6: with genre
 		if (!(commaCount == 5 || commaCount == 6)) continue;
 
-		int start = 0;
-		int end = line.find(delim);
+		// Variables to track start and end position of fields in csv row
+		size_t start = 0;
+		size_t end = line.find(delim);
 		int i = 0;
 		string fields[7];
 
@@ -238,6 +269,7 @@ bool StoreManager::loadItemsFromFile() {
 			cout << "Item " << id << " already exists!" << endl;
 			continue;
 		}
+		// Get the fields from string array and trim them
 		string title = trim(fields[1]);
 		string rentalType = trim(fields[2]);
 		string loanType = trim(fields[3]);
@@ -257,17 +289,22 @@ bool StoreManager::loadItemsFromFile() {
 		// Skip the line if the game item has genre
 		if (!isEmpty(genre) && rentalType == "Game") continue;
 
+		// Convert from string to correct data types
 		int numberOfCopies = stoi(fields[4]);
 		double rentalFee = stod(fields[5]);
 
+		// Create the item from those fields
 		Item* item = createItem(id, title, rentalType, loanType, numberOfCopies, rentalFee, genre);
 		// Skip if the item cannot be created
 		if (item == nullptr) {
 			continue;
 		}
+		// Add the item to list
 		items->add(item);
 	}
+	// Close the input file
 	infile.close();
+	// Return true to notify that the file is successfully loaded
 	return true;
 }
 
@@ -321,88 +358,123 @@ Customer* StoreManager::createCustomer(const string& id, const string& name, con
 	return nullptr;
 }
 
+// Return the item from id, return nullptr if the id does not exist
 Item* StoreManager::getItemById(const string& id) {
+	// Get the head node of the item list
 	auto current = items->getHead();
+	// Loop through all nodes
 	while (current) {
+		// If the id is found, return the item
 		if (current->data->getId() == id) return current->data;
+		// Set the current node to next node
 		current = current->next;
 	}
+	// If not found, return nullptr
 	return nullptr;
 }
+
+// Return the non-exist item id from input
 string StoreManager::getNonExistItemIdInput()
 {
 	string input;
 	while (true)
 	{
+		// Get the item id input
 		input = getItemIdInput();
+		// If the item does not exists with that id, return the id
 		if (!itemExists(input)) return input;
+		// Display the error message and require the user to type again
 		cout << "Item ID " << input << " already exists!" << endl;
 	}
 	return input;
 }
+
+// Return the item from id input
 Item* StoreManager::getExistItemInput()
 {
 	string input;
 	Item* item = nullptr;
 	while (true) {
+		// Ask for the item id
 		input = getItemIdInput();
 		item = getItemById(input);
+		// If the item is not null, return it
 		if (item != nullptr) return item;
+		// Display the error message and require the user to type again
 		cout << "Item ID " << input << " does not exist!" << endl;
 	}
 	return item;
 }
 
+// Return the customer from id, return nullptr if the id does not exist
 Customer* StoreManager::getCustomerById(const string& id) {
+	// Get the head node of customer list
 	auto current = customers->getHead();
+	// Loop through all nodes
 	while (current) {
+		// If the id is found, return the customer
 		if (current->data->getId() == id) return current->data;
 		current = current->next;
 	}
+	// If the customer is not found, return null
 	return nullptr;
 }
 
+// Return the non-exist customer id from input
 string StoreManager::getNonExistCustomerIdInput() {
 	string input;
 	while (true) {
+		// Ask for customer id
 		input = getCustomerIdInput();
+		// If the id does not exist, return the id
 		if (!customerExists(input)) return input;
+		// Require the user to type again
 		cout << "Customer ID " << input << " already exists!" << endl;
 	}
 	return input;
 }
 
+// Return the customer from id input
 Customer* StoreManager::getExistCustomerInput() {
 	string input;
 	Customer* customer;
 	while (true) {
+		// Ask for customer id
 		input = getCustomerIdInput();
 		customer = getCustomerById(input);
+		// If the customer is not null, return it
 		if (customer != nullptr) return getCustomerById(input);
+		// Display the error message and require the user to type again
 		cout << "Customer ID " << input << " does not exist!" << endl;
 	}
 	return customer;
 }
 
+// Find the customer index inside the list from id
 int StoreManager::getCustomerIndex(const std::string& id) {
 	int i = 0;
 	auto current = customers->getHead();
 	while (current) {
+		// Return the index if the id is found
 		if (current->data->getId() == id) return i;
 		current = current->next;
 		i++;
 	}
+	// Return -1 if the customer is not found
 	return -1;
 }
 
+// Find the item index inside the list from id
 int StoreManager::getItemIndex(const std::string& id) {
 	int i = 0;
 	auto current = items->getHead();
 	while (current) {
+		// Return the index if the id is found
 		if (current->data->getId() == id) return i;
 		current = current->next;
 		i++;
 	}
+	// Return -1 if the item is not found
 	return -1;
 }
 // 1 
@@ -421,53 +493,67 @@ void StoreManager::displayItemMenu()
 	else if (option == 2) addItemCopiesToStock();
 	else if (option == 3) updateItem();
 	else if (option == 4) deleteItem();
-	else if (option == 5) return;
+	else if (option == 5) return; // Exit from item menu
 	waitForEnter();
+	// Display item menu again
 	displayItemMenu();
 }
-// 1.1 - ask about genre / loan type input ?
+// 1.1
 void StoreManager::addItem()
 {
+	// Ask for item type
 	cout << "-------------------------------" << endl;
 	cout << "Select item type" << endl;
 	cout << "1. Record" << endl;
 	cout << "2. DVD" << endl;
 	cout << "3. Game" << endl;
-	// ngan gon
 	int option = getOptionInput(1, 3);
 	string rentalType = "";
+	// Set the item type based on option
 	if (option == 1) rentalType = "Record";
 	else if (option == 2) rentalType = "DVD";
 	else if (option == 3) rentalType = "Game";
+	// Get other fields
 	string id = getNonExistItemIdInput();
 	string title = getItemTitleInput();
 	string loanType = getItemLoanTypeInput();
 	int numberOfCopies = getItemNumberOfCopiesInput();
 	double rentalFee = getItemRentalFeeInput();
 	string genre;
+	// Skip asking genre if the item type is Game
 	if (rentalType != "Game") {
 		genre = getItemGenreInput();
 	}
+	// Create the item from user input
 	Item* item = createItem(id, title, rentalType, loanType, numberOfCopies, rentalFee, genre);
+	// Add the item to list
 	items->add(item);
+	// Display success message
 	cout << "Add item " << id << " succesfully!" << endl;;
 }
 
-// 1.2 - done
+// 1.2
 void StoreManager::addItemCopiesToStock()
 {
+	// Get the exist item
 	Item* item = getExistItemInput();
+	// Display item info
 	cout << item->toConsoleString();
+	// Get the number of copies to add to stock
 	int numberOfCopies = getItemNumberOfCopiesInput();
 	item->addToStock(numberOfCopies);
+	// Display success message
 	cout << "Add " << numberOfCopies << " copies of item " << item->getId() << " to stock succesfully!" << endl;
 }
 
-// 1.3 - Nam 
+// 1.3
 void StoreManager::updateItem()
 {
+	// Get the exist item
 	Item* item = getExistItemInput();
+	// Display item info
 	cout << item->toConsoleString();
+	// Display update options
 	cout << "------------------------" << endl;
 	cout << "1. Update title" << endl;
 	cout << "2. Update loan type" << endl;
@@ -494,6 +580,7 @@ void StoreManager::updateItem()
 		cout << "Update rental fee sucessfully!" << endl;
 	}
 	else if (option == 4) {
+		// Display error message if the user tries to update genre of a Game item
 		if (item->getRentalType() == "Game") {
 			cout << "Game items do not have genre!" << endl;
 		}
@@ -509,16 +596,18 @@ void StoreManager::updateItem()
 // 1.4 
 void StoreManager::deleteItem()
 {
+	// Get the exist item
 	Item* item = getExistItemInput();
 
 	// Check if item is rented by any customer
-	// Loop over all customers
+
 	stringstream ss;
 	int count = 0;
 	auto currentCustomerNode = customers->getHead();
+	// Loop through all customers
 	while (currentCustomerNode) {
 		auto currentItemIdNode = currentCustomerNode->data->getRentalIds()->getHead();
-		// Loop over all item ids
+		// Loop over all item ids of the current customer
 		while (currentItemIdNode) {
 			if (currentItemIdNode->data == item->getId()) {
 				ss << currentCustomerNode->data->getId() << endl;
@@ -528,12 +617,13 @@ void StoreManager::deleteItem()
 		}
 		currentCustomerNode = currentCustomerNode->next;
 	}
-	// If the item is rented by any customer
+	// If the item is rented by any customer, display all customers that are renting the item and exit the option
 	if (count > 0) {
 		cout << "Can't delete this item as it is being rented by these customers: " << endl;
 		cout << ss.str();
 		return;
 	}
+	// Otherwise, delete the item and display success message
 	int i = getItemIndex(item->getId());
 	items->deleteNode(i);
 	cout << "Delete item " << item->getId() << " successfully!" << endl;
@@ -551,33 +641,43 @@ void StoreManager::displayCustomerMenu()
 	int option = getOptionInput(1, 3);
 	if (option == 1) addCustomer();
 	else if (option == 2) updateCustomer();
-	else if (option == 3) return;
+	else if (option == 3) return; // Exit from customer menu
 	waitForEnter();
+	// Display customer menu again
 	displayCustomerMenu();
 }
 
-// 2.1 - done
+// 2.1
 void StoreManager::addCustomer()
 {
+	// Get all fields from input
 	string id = getNonExistCustomerIdInput();
 	string name = getCustomerNameInput();
 	string address = getCustomerAddressInput();
 	string phoneNumber = getCustomerPhoneNumberInput();
+	// Default type when creating a customer will be Guest
 	string type = "Guest";
+	// Create customer from inputs
 	Customer* customer = createCustomer(id, name, address, phoneNumber, type);
+	// Exit if the customer cannot be created
 	if (customer == nullptr) {
 		cout << "Cannot add customer " << id << endl;
 		return;
 	}
+	// Add customer to list
 	customers->add(customer);
+	// Display success message
 	cout << "Add customer " << id << " successfully!" << endl;
 }
 
-// 2.2//done
+// 2.2
 void StoreManager::updateCustomer()
 {
+	// Get exist customer
 	Customer* customer = getExistCustomerInput();
+	// Display customer info
 	cout << customer->toConsoleString();
+	// Select field to update
 	cout << "-----------------------" << endl;
 	cout << "1. Update name" << endl;
 	cout << "2. Update phone number " << endl;
@@ -608,12 +708,15 @@ void StoreManager::updateCustomer()
 // 3
 void StoreManager::promoteCustomer()
 {
+	// Get exist customer
 	Customer* customer = getExistCustomerInput();
+	// Exit if the customer type is VIP
 	if (customer->getType() == "VIP") {
 		cout << "VIP customer cannot be promoted!" << endl;
 		waitForEnter();
 		return;
 	}
+	// Exit if the customer has not returned 3 items
 	if (!customer->isPromotable()) {
 		cout << "Guest and Regular customer must return 3 items to be promoted!" << endl;
 		cout << "Current number of returns: " << customer->getNumberOfReturns() << endl;
@@ -621,14 +724,19 @@ void StoreManager::promoteCustomer()
 		return;
 	}
 
+	// Delete the current customer from list
 	int i = getCustomerIndex(customer->getId());
 	customers->deleteNode(i);
 
+	// Create the new customer with the same attributes except for the type
 	string type = customer->getType();
 	string newType;
 	if (type == "Regular")newType = "VIP";
 	else if (type == "Guest") newType = "Regular";
+
+	// Add the promoted customer to list
 	customers->add(createCustomer(customer->getId(), customer->getName(), customer->getAddress(), customer->getPhoneNumber(), newType));
+	// Display success message
 	cout << "Promote customer " << customer->getId() << " successfully from " << type << " to " << newType << endl;
 	waitForEnter();
 }
@@ -636,13 +744,17 @@ void StoreManager::promoteCustomer()
 // 4
 void StoreManager::rentItem()
 {
+	// Get exist customer
 	Customer* customer = getExistCustomerInput();
+	// Display customer info
 	cout << customer->toConsoleString();
+	// Exit if the guest customer is renting 2 items
 	if (customer->getType() == "Guest" && customer->getNumberOfRentals() >= 2) {
 		cout << "Guest customer cannot rent more than 2 items at a time!" << endl;
 		waitForEnter();
 		return;
 	}
+	// Get exist item
 	Item* item = getExistItemInput();
 	// Exit if the item is not available
 	if (!item->isAvailable()) {
@@ -668,31 +780,45 @@ void StoreManager::rentItem()
 	}
 
 	string costString = item->getRentalFeeString();
+	// Check if the customer can rent for free (should be VIP customer)
 	if (customer->canRentForFree()) {
+		// Ask to rent for free by 100 VIP points
 		cout << "Do you want to use 100 VIP points to rent this item for free? Current VIP points: " << customer->getPoints() << endl;
+		// Select yes or no
 		bool rentForFree = getYesNoInput();
+		// If yes
 		if (rentForFree) {
+			// Set the display cost to 0
 			costString = "0.00";
+			// Consume 100 points from customer account
 			customer->consumePoints(100);
 			cout << "Consumed 100 VIP points! Current VIP points: " << customer->getPoints() << endl;
 		}
 	}
+	// Display success message and the cost
 	cout << "Rent item successfully! Cost($): " << costString << endl;
+
+	// Add the item id to customer rental list
 	customer->rentItem(item->getId());
 	item->rented();
+
 	waitForEnter();
 }
 
 // 5
 void StoreManager::returnItem()
 {
+	// Get exist customer
 	Customer* customer = getExistCustomerInput();
+	// Display customer info
 	cout << customer->toConsoleString();
+	// Get exist item
 	Item* item = getExistItemInput();
 	// If the item is in the customer rental list
 	if (customer->returnItem(item->getId())) {
 		cout << "Return item sucessfully!" << endl;
 		item->returned();
+		// Display VIP points if the customer is VIP
 		if (customer->getType() == "VIP") cout << "Receive 10 VIP points! Current VIP points: " << customer->getPoints() << endl;
 		waitForEnter();
 		return;
@@ -701,9 +827,10 @@ void StoreManager::returnItem()
 	cout << "Item " << item->getId() << " is not rented by " << customer->getId() << endl;
 	waitForEnter();
 }
-// 6 - TODO: sort by id, title
+// 6
 void StoreManager::displayAllItems()
 {
+	// Sort based on option
 	cout << "-------------------------" << endl;
 	cout << "1. Display all items sorted by ID." << endl;
 	cout << "2. Display all items sorted by title." << endl;
@@ -717,7 +844,9 @@ void StoreManager::displayAllItems()
 		sortItemsByTitle(items->getHeadRef());
 	}
 	else if (option == 3)return;
+	// Display number of items
 	cout << items->getSize() << " item(s)" << endl;
+	// Display all items to the console
 	auto current = items->getHead();
 	while (current) {
 		cout << current->data->toConsoleString();
@@ -726,28 +855,32 @@ void StoreManager::displayAllItems()
 	waitForEnter();
 }
 
-// 7 - TODO: sort by id, title 
+// 7
 void StoreManager::displayOutOfStockItems()
 {
+	// Create a string stream to store all item strings
 	stringstream ss;
 	int count = 0;
 	auto current = items->getHead();
 	while (current) {
-		// Only print the item if it is out of stock
+		// Add the item string to string stream if it is not avaiable
 		if (!current->data->isAvailable()) {
 			ss << current->data->toConsoleString();
 			count++;
 		}
 		current = current->next;
 	}
+	// Display number of out of stock items
 	cout << count << " out-of-stock item(s)" << endl;
+	// Display all out-of-stock items
 	cout << ss.str();
 	waitForEnter();
 }
 
-//8 - TODO: sort by id, name
+//8
 void StoreManager::displayAllCustomers()
 {
+	// Sort based on option
 	cout << "-------------------------" << endl;
 	cout << "1. Display all customers sorted by ID." << endl;
 	cout << "2. Display all customers sorted by name." << endl;
@@ -762,7 +895,9 @@ void StoreManager::displayAllCustomers()
 	}
 	else if (option == 3)return;
 
+	// Display number of customers
 	cout << "There are " << customers->getSize() << " customer(s)" << endl;
+	// Display all customers
 	auto current = customers->getHead();
 	while (current) {
 		cout << "---------------" << endl;
@@ -772,7 +907,7 @@ void StoreManager::displayAllCustomers()
 	waitForEnter();
 }
 
-// 9 - TODO: sort by id, name
+// 9
 void StoreManager::displayGroupOfCustomers()
 {
 	cout << "-------------------------------" << endl;
@@ -789,10 +924,13 @@ void StoreManager::displayGroupOfCustomers()
 	else if (option == 2) type = "Regular";
 	else if (option == 3) type = "VIP";
 	else if (option == 4) return;
+
+	// Create a string stream that store customer strings
 	stringstream ss;
 	auto current = customers->getHead();
 	int count = 0;
 	while (current) {
+		// If the customer type is the selected type, add the customer string to the string stream
 		if (current->data->getType() == type) {
 			ss << "---------------" << endl;
 			ss << current->data->toConsoleString();
@@ -800,9 +938,12 @@ void StoreManager::displayGroupOfCustomers()
 		}
 		current = current->next;
 	}
+	// Display number of customers of the selected type
 	cout << count << " " << type << " customer(s)" << endl;
+	// Display all customers
 	cout << ss.str();
 	waitForEnter();
+	// Display the menu again
 	displayGroupOfCustomers();
 }
 
@@ -826,54 +967,70 @@ void StoreManager::displaySearchMenu()
 }
 // 10.1
 void StoreManager::searchItemById() {
+	// Get the valid item id
 	string id = getItemIdInput();
+	// Find the item
 	Item* item = getItemById(id);
+	// Display a message if the item does not exist
 	if (item == nullptr) {
 		cout << "Item with ID " << id << " does not exist!" << endl;
 		return;
 	}
+	// Display the item
 	cout << item->toConsoleString();
 
 }
 //10.2
 void StoreManager::searchItemByTitle() {
+	// Get the title
 	string title = getItemTitleInput();
 	int count = 0;
+	// Create the string stream to store item strings
 	stringstream ss;
 	auto current = items->getHead();
 	while (current) {
+		// Store the item strings of that title
 		if (current->data->getTitle() == title) {
 			ss << current->data->toConsoleString();
 			count++;
 		}
 		current = current->next;
 	}
+	// Display all items with that title if there is any
 	if (count > 0) {
 		cout << count << " item(s) with title " << title << endl;
 		cout << ss.str();
 		return;
 	}
+	// Display a message if there is no item with that title
 	cout << "Item with title " << title << " does not exist!" << endl;
 }
 
 //10.3
 void StoreManager::searchCustomerById() {
+	// Get the valid customer id
 	string id = getCustomerIdInput();
+	// Find the customer
 	Customer* customer = getCustomerById(id);
+	// Display a message if the id does not exist
 	if (customer == nullptr) {
 		cout << "Customer with ID " << id << " does not exist!" << endl;
 		return;
 	}
+	// Display the customer
 	cout << customer->toConsoleString();
 }
 
 //10.4
 void StoreManager::searchCustomerByName() {
+	// Get the customer name
 	string name = getCustomerNameInput();
 	int count = 0;
+	// Create a string stream to store customer strings
 	stringstream ss;
 	auto current = customers->getHead();
 	while (current) {
+		// Add the customer strings of that name
 		if (current->data->getName() == name) {
 			ss << "---------------" << endl;
 			ss << current->data->toConsoleString();
@@ -881,11 +1038,13 @@ void StoreManager::searchCustomerByName() {
 		}
 		current = current->next;
 	}
+	// Display all customers with that name if there is any
 	if (count > 0) {
 		cout << count << " customer(s) with name " << name << endl;
 		cout << ss.str();
 		return;
 	}
+	// Display a message if the customer does not exist
 	cout << "Customer with name " << name << " does not exist!" << endl;
 }
 
