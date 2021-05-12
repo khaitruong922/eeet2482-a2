@@ -217,7 +217,9 @@ bool StoreManager::loadCustomersFromFile() {
 	// Check last customer number of rentals mismatch
 	// Log the error message if the number of rentals below the customer row does not match the number of rentals in the customer row 
 	if (currentNumberOfRentals != maxNumberOfRentals && lastCustomer != nullptr) {
+		int finalNumberOfRentals = currentNumberOfRentals < maxNumberOfRentals ? currentNumberOfRentals : maxNumberOfRentals;
 		cout << lastCustomer->getId() << ": Number of rentals mismatch. Expected: " << maxNumberOfRentals << ". Actual: " << currentNumberOfRentals << endl;
+		cout << "Program will modify the number of rentals to " << finalNumberOfRentals << endl;
 	}
 	// Close the input file
 	infile.close();
