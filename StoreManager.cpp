@@ -692,8 +692,8 @@ void StoreManager::updateCustomer()
 	if (option == 1)
 	{
 		string name = getCustomerNameInput();
-		customer->setId(name);
-		cout << "Update customer ID successfully!!" << endl;
+		customer->setName(name);
+		cout << "Update customer name successfully!!" << endl;
 	}
 	else if (option == 2)
 	{
