@@ -75,6 +75,21 @@ bool isValidGenre(const string& s) {
 	return s == "Action" || s == "Comedy" || s == "Horror" || s == "Drama";
 }
 
+bool isValidCustomerType(const string& s)
+{
+	return s == "Guest" || s == "Regular" || s == "VIP";
+}
+
+bool isValidPhoneNumber(const string& s)
+{
+	return isNotEmpty(s) && isNumeric(s);
+}
+
+bool isValidName(const string& s)
+{
+	return isNotEmpty(s) && isAlpha(s);
+}
+
 bool hasComma(const string& s) {
 	return s.find(',') != string::npos;
 }

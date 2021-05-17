@@ -96,6 +96,7 @@ bool StoreManager::loadCustomersFromFile() {
 	}
 
 	string line;
+	int lineNum = 0;
 	string delim = ",";
 
 	// Track the last customer to insert the items
@@ -105,6 +106,7 @@ bool StoreManager::loadCustomersFromFile() {
 	int currentNumberOfRentals = 0;
 	// Loop over all lines in file
 	while (getline(infile, line)) {
+		lineNum++;
 		// Trim line
 		line = trim(line);
 		// Check if line is item ID
@@ -115,7 +117,9 @@ bool StoreManager::loadCustomersFromFile() {
 			Item* item = getItemById(line);
 			// Skip if the item does not exist
 			if (item == nullptr) {
-				cout << lastCustomer->getId() << ": Item " << line << " does not exist!" << endl;
+				stringstream ss;
+				ss << lastCustomer->getId() << ": Item " << line << " does not exist!";
+				displayCustomerError(lineNum, ss.str());
 				continue;
 			};
 
@@ -124,7 +128,9 @@ bool StoreManager::loadCustomersFromFile() {
 			auto current = lastCustomer->getRentalIds()->getHead();
 			while (current) {
 				if (item->getId() == current->data) {
-					cout << "Item " << item->getId() << " is already rented by " << lastCustomer->getId() << endl;
+					stringstream ss;
+					ss << "Item " << item->getId() << " is already rented by " << lastCustomer->getId();
+					displayCustomerError(lineNum, ss.str());
 					hasDuplicateItem = true;
 					break;
 				}
@@ -139,7 +145,9 @@ bool StoreManager::loadCustomersFromFile() {
 			}
 			// Skip if the item is out of stock
 			if (!item->isAvailable()) {
-				cout << "Item out-of-stock: " << item->getId() << " is not avaialble to be rented by " << lastCustomer->getId() << endl;
+				stringstream ss;
+				ss << "Item out-of-stock: " << item->getId() << " is not avaialble to be rented by " << lastCustomer->getId();
+				displayCustomerError(lineNum, ss.str());
 				continue;
 			}
 			lastCustomer->rentItem(line);
@@ -147,6 +155,8 @@ bool StoreManager::loadCustomersFromFile() {
 			continue;
 		}
 
+		// Set the last customer to null at first if it is not an item line
+		lastCustomer = nullptr;
 		// Skip if there is a invalid number of commas for customer row
 		int commaCount = 0;
 		for (int i = 0; i < line.length(); i++) {
@@ -176,7 +186,9 @@ bool StoreManager::loadCustomersFromFile() {
 
 		// Skip if id already exists
 		if (customerExists(id)) {
-			cout << "Customer " << id << " already exists!" << endl;
+			stringstream ss;
+			ss << "Customer " << id << " already exists!";
+			displayCustomerError(lineNum, ss.str());
 			lastCustomer = nullptr;
 			continue;
 		};
@@ -191,21 +203,48 @@ bool StoreManager::loadCustomersFromFile() {
 
 		// Validate the number of rentals
 		string maxNumberOfRentalsString = trim(fields[4]);
-		if (!isNonNegativeInteger(maxNumberOfRentalsString)) continue;
+		if (!isNonNegativeInteger(maxNumberOfRentalsString)) {
+			stringstream ss;
+			ss << "Invalid number of rentals: " << maxNumberOfRentalsString;
+			displayCustomerError(lineNum, ss.str());
+			continue;
+		}
 		// Reset the current number of rentals
 		currentNumberOfRentals = 0;
 		// Assign the new max number of rentals
 		maxNumberOfRentals = stoi(maxNumberOfRentalsString);
-		// Get the fields from string array and trim them
+		// Get the fields from string array, trim and validate them
 		string name = trim(fields[1]);
+		if (!isValidName(name)) {
+			stringstream ss;
+			ss << "Invalid name: " << name;
+			displayCustomerError(lineNum, ss.str());
+			continue;
+		}
 		string address = trim(fields[2]);
+		if (isEmpty(address)) {
+			stringstream ss;
+			ss << "Invalid address: " << address;
+			displayCustomerError(lineNum, ss.str());
+			continue;
+		}
 		string phoneNumber = trim(fields[3]);
+		if (!isValidPhoneNumber(phoneNumber)) {
+			stringstream ss;
+			ss << "Invalid phone number: " << phoneNumber;
+			displayCustomerError(lineNum, ss.str());
+			continue;
+		}
 		string type = trim(fields[5]);
+		if (!isValidCustomerType(type)) {
+			stringstream ss;
+			ss << "Invalid customer type: " << type;
+			displayCustomerError(lineNum, ss.str());
+			continue;
+		}
 		Customer* customer = createCustomer(id, name, address, phoneNumber, type);
 		// Skip if the customer cannot be created
 		if (customer == nullptr) {
-			lastCustomer = nullptr;
-			delete customer;
 			continue;
 		}
 		// Store the customer inside the list
@@ -238,10 +277,12 @@ bool StoreManager::loadItemsFromFile() {
 		return false;
 	}
 
+	int lineNum = 0;
 	string line;
 	string delim = ",";
 	// Loop through all fields
 	while (getline(infile, line)) {
+		lineNum++;
 		// Skip if there are invalid number of commas
 		int commaCount = 0;
 		for (int i = 0; i < line.length(); i++) {
@@ -271,28 +312,60 @@ bool StoreManager::loadItemsFromFile() {
 
 		//Skip if the item id alreasy exists
 		if (itemExists(id)) {
-			cout << "Item " << id << " already exists!" << endl;
+			stringstream ss;
+			ss << "Item " << id << " already exists!";
+			displayItemError(lineNum, ss.str());
 			continue;
 		}
-		// Get the fields from string array and trim them
+		// Get the fields from string array, trim and validate them
 		string title = trim(fields[1]);
+		if (isEmpty(title)) {
+			stringstream ss;
+			ss << "Invalid title: " << title;
+			displayItemError(lineNum, ss.str());
+			continue;
+		}
 		string rentalType = trim(fields[2]);
+		if (!isValidRentalType(rentalType)) {
+			stringstream ss;
+			ss << "Invalid rental type: " << rentalType;
+			displayItemError(lineNum, ss.str());
+			continue;
+		}
 		string loanType = trim(fields[3]);
+		if (!isValidLoanType(loanType)) {
+			stringstream ss;
+			ss << "Invalid loan type: " << loanType;
+			displayItemError(lineNum, ss.str());
+			continue;
+		}
 		string numberOfCopiesString = trim(fields[4]);
-		string rentalFeeString = trim(fields[4]);
+		if (!isNonNegativeInteger(numberOfCopiesString)) {
+			stringstream ss;
+			ss << "Invalid number of copies: " << numberOfCopiesString;
+			displayItemError(lineNum, ss.str());
+			continue;
+		}
+		string rentalFeeString = trim(fields[5]);
+		if (!isNonNegativeNumber(rentalFeeString)) {
+			stringstream ss;
+			ss << "Invalid rental fee: " << rentalFeeString;
+			displayItemError(lineNum, ss.str());
+			continue;
+		}
 		string genre = trim(fields[6]);
-		// Skip the line if the rental type is invalid
-		if (!isValidRentalType(rentalType)) continue;
-		// Skip the line if the loan type is invalid
-		if (!isValidLoanType(loanType)) continue;
-		// Skip the line if number of copies <= 0 or not integer
-		if (!isNonNegativeInteger(numberOfCopiesString)) continue;
-		// Skip the line if the rental fee is not a non negative number
-		if (!isNonNegativeNumber(rentalFeeString)) continue;
-		// Skip the line if the genre is invalid for non-game item
-		if (!isValidGenre(genre) && rentalType != "Game") continue;
-		// Skip the line if the game item has genre
-		if (!isEmpty(genre) && rentalType == "Game") continue;
+		if (!isValidGenre(genre) && rentalType != "Game") {
+			stringstream ss;
+			ss << "Invalid genre for non-game items: " << genre;
+			displayItemError(lineNum, ss.str());
+			continue;
+		}
+		if (!isEmpty(genre) && rentalType == "Game") {
+			stringstream ss;
+			ss << "Game items cannot have genre. Found: " << genre;
+			displayItemError(lineNum, ss.str());
+			continue;
+		}
 
 		// Convert from string to correct data types
 		int numberOfCopies = stoi(fields[4]);
@@ -346,6 +419,14 @@ void StoreManager::saveItems() {
 	}
 
 	outfile.close();
+}
+void StoreManager::displayCustomerError(int lineNum, string content)
+{
+	cout << customers_file_name << " - line " << lineNum << ": " << content << endl;
+}
+void StoreManager::displayItemError(int lineNum, string content)
+{
+	cout << items_file_name << " - line " << lineNum << ": " << content << endl;
 }
 // Return the item pointer from parameters, return nullptr if the rental type is not Record, DVD or Game
 Item* StoreManager::createItem(const string& id, const string& title, const string& rentalType, const string& loanType, int numberOfCopies, double rentalFee, const string& genre) {

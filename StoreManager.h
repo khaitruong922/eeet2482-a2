@@ -23,6 +23,11 @@ private:
     void saveCustomers();
     void saveItems();
 
+    // File error display methods
+    void displayCustomerError(int lineNum, string content);
+    void displayItemError(int lineNum, string content);
+
+
     // Object creation methods
     Item* createItem(const string& id, const string& title, const string& rentalType, const string& loanType, int numberOfCopies, double rentalFee, const string& genre);
     Customer* createCustomer(const string& id, const string& name, const string& address, const string& phoneNumber, const string& type);
