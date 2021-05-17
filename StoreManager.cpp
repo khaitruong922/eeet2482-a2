@@ -155,6 +155,12 @@ bool StoreManager::loadCustomersFromFile() {
 			continue;
 		}
 
+		// Log the error message if the number of rentals below the customer row does not match the number of rentals in the customer row 
+		if (currentNumberOfRentals != maxNumberOfRentals && lastCustomer != nullptr) {
+			int finalNumberOfRentals = currentNumberOfRentals < maxNumberOfRentals ? currentNumberOfRentals : maxNumberOfRentals;
+			cout << lastCustomer->getId() << ": Number of rentals mismatch. Expected: " << maxNumberOfRentals << ". Actual: " << currentNumberOfRentals << endl;
+			cout << "Program will modify the number of rentals to " << finalNumberOfRentals << endl;
+		}
 		// Set the last customer to null at first if it is not an item line
 		lastCustomer = nullptr;
 		// Skip if there is a invalid number of commas for customer row
@@ -182,25 +188,20 @@ bool StoreManager::loadCustomersFromFile() {
 		// Get last field
 		fields[i] = line.substr(start, end - start);
 		string id = trim(fields[0]);
-
+		if (!isValidCustomerId(id)) {
+			stringstream ss;
+			ss << "Invalid customer ID: " << id;
+			displayCustomerError(lineNum, ss.str());
+			continue;
+		}
 
 		// Skip if id already exists
 		if (customerExists(id)) {
 			stringstream ss;
 			ss << "Customer " << id << " already exists!";
 			displayCustomerError(lineNum, ss.str());
-			lastCustomer = nullptr;
 			continue;
 		};
-
-		// Now the customer is valid
-		// Log the error message if the number of rentals below the customer row does not match the number of rentals in the customer row 
-		if (currentNumberOfRentals != maxNumberOfRentals && lastCustomer != nullptr) {
-			int finalNumberOfRentals = currentNumberOfRentals < maxNumberOfRentals ? currentNumberOfRentals : maxNumberOfRentals;
-			cout << lastCustomer->getId() << ": Number of rentals mismatch. Expected: " << maxNumberOfRentals << ". Actual: " << currentNumberOfRentals << endl;
-			cout << "Program will modify the number of rentals to " << finalNumberOfRentals << endl;
-		}
-
 		// Validate the number of rentals
 		string maxNumberOfRentalsString = trim(fields[4]);
 		if (!isNonNegativeInteger(maxNumberOfRentalsString)) {
@@ -309,7 +310,12 @@ bool StoreManager::loadItemsFromFile() {
 		fields[i] = line.substr(start, end - start);
 		i++;
 		string id = trim(fields[0]);
-
+		if (!isValidItemId(id)) {
+			stringstream ss;
+			ss << "Invalid item ID: " << id;
+			displayItemError(lineNum, ss.str());
+			continue;
+		}
 		//Skip if the item id alreasy exists
 		if (itemExists(id)) {
 			stringstream ss;
@@ -982,7 +988,7 @@ void StoreManager::displayAllCustomers()
 	else if (option == 3)return;
 
 	// Display number of customers
-	cout << "There are " << customers->getSize() << " customer(s)" << endl;
+	cout << customers->getSize() << " customer(s)" << endl;
 	// Display all customers
 	auto current = customers->getHead();
 	while (current) {
